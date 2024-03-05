@@ -6,7 +6,7 @@
 ###  - bus priority
 ###  - bus routes
 
-setwd("C:\\Users\\tom.alexander1\\OneDrive - West Of England Combined Authority\\Transport\\2.1 Walking, Cycling & Wheeling\\")
+setwd("C:\\Users\\tom.alexander1\\OneDrive - West Of England Combined Authority\\Transport\\2.2 Bus\\")
 library(tidyverse)
 library(sf)
 
@@ -45,4 +45,7 @@ bcc_bus_gates <- st_read(connec,query = "SELECT * FROM bcc.bus_gate_lines")
 ####   load bus routes   ##########################################################
 
 bus_routes <- st_read(connec,query = "SELECT * FROM arup.existingbusservices")
- 
+
+####   remove superfluous objects   ##################################################
+
+rm(geojson_file_path, path_to_helper_scripts, connec)
