@@ -38,13 +38,13 @@ if(!exists("connec")) {
   source(paste0(path_to_helper_scripts,"access_postgresql\\access_to_postgresql\\connect_postgreSQL.R"))
 }
 
-bcc_bus_lanes <- st_read(connec,query = "SELECT * FROM bcc.bus_lane_centrelines")
-bcc_bus_gates <- st_read(connec,query = "SELECT * FROM bcc.bus_gate_lines")
+bcc_bus_lanes <- st_read(connec,query = "SELECT * FROM bcc.bus_lane_centrelines") %>% st_transform(crs = 4326)
+bcc_bus_gates <- st_read(connec,query = "SELECT * FROM bcc.bus_gate_lines") %>% st_transform(crs = 4326)
 
 
 ####   load bus routes   ##########################################################
 
-bus_routes <- st_read(connec,query = "SELECT * FROM arup.existingbusservices")
+bus_routes <- st_read(connec,query = "SELECT * FROM arup.existingbusservices") %>%st_transform(crs = 4326)
 
 ####   remove superfluous objects   ##################################################
 
