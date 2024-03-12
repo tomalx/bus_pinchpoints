@@ -80,6 +80,15 @@ leaflet() %>%  addProviderTiles(providers$CartoDB.Positron) %>%
 # filter for the worst delays where traffic speeds are reduced by x percent?
 # display this sf object in leaflet
 
+delay_colour_domain <- all_tm %>% filter(delay >= 5 & delay <= 10)
+
+# set colour palette for delays (over x minutes)
+pal <- colorNumeric(
+    palette = c( "#00FFDD", "#2FA4FF","#0E185F"),
+    domain = delay_colour_domain$delay)
+  
+# filter for the worst delays where traffic speeds are reduced by x percent?
+
 all_tm_slowest <- all_tm %>% filter(delay >= 10) %>% st_zm() %>% 
    group_by(time_period) %>%  # ".x" is refers to the current group:
    group_modify(~ st_union(.x) %>% 
@@ -91,12 +100,13 @@ all_tm_slowest <- all_tm %>% filter(delay >= 10) %>% st_zm() %>%
 all_tm_slowest_size <- as.numeric(round(object.size(all_tm_slowest)/1024, 0))
 
 leaflet() %>%  addProviderTiles(providers$CartoDB.Positron) %>% 
-  addPolylines(data = all_tm_slowest %>% filter(time_period == "0700_0800"), color = "Red",group = "seven", weight = 2) %>% 
-  # addPolylines(data = all_tm_slowest %>% filter(time_period == "0800_0900"), color = "Blue", group = "eight", weight = 2) %>% 
-  # addPolylines(data = all_tm_slowest %>% filter(time_period == "1000_1600"), color = "Green", group = "IP", weight = 2) %>%
+  addPolylines(data = all_tm_slowest %>% filter(time_period == "0700_0800"), color = "#0E185F",group = "seven", weight = 2) %>% 
+  addPolylines(data = all_tm_slowest %>% filter(time_period == "0800_0900"), color = "#0E185F", group = "eight", weight = 2) %>% 
+  addPolylines(data = all_tm_slowest %>% filter(time_period == "1000_1600"), color = "#0E185F", group = "IP", weight = 2) %>%
 
   addLayersControl(
-    overlayGroups = c("seven", "eight", "IP"),
+    baseGroups = c("seven", "eight", "IP"),
+    #overlayGroups = c("seven", "eight", "IP"),
     options = layersControlOptions(collapsed = FALSE))
 
 
