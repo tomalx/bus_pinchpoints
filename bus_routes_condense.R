@@ -24,20 +24,27 @@ bus_routes <- bus_routes %>% filter(line_name != "FALCON" & freqency > 0)
 
 bus_routes_size <- as.numeric(round(object.size(bus_routes)/1024, 0))
 
-bus_routes_merged <- function(bus_routes_sf){
-  
-  comp <- bus_routes_sf %>% st_geometry() %>%  st_touches() %>% 
-    graph_from_adj_list() %>% components() %>% .$membership
-  
-  bus_routes_sf <- bus_routes_sf %>% group_by(section = as.character(comp)) %>%
-    summarise()
-  
-  return(bus_routes_sf)
-  
-}
+# bus_routes_merged <- function(bus_routes_sf){
+#   
+#   comp <- bus_routes_sf %>% st_geometry() %>%  st_touches() %>% 
+#     graph_from_adj_list() %>% components() %>% .$membership
+#   
+#   bus_routes_sf <- bus_routes_sf %>% group_by(section = as.character(comp)) %>%
+#     summarise()
+#   
+#   return(bus_routes_sf)
+#   
+# }
+# 
+# bus_routes_touch <- bus_routes_merged(bus_routes) 
+# 
 
-bus_routes_touch <- bus_routes_merged(bus_routes) 
 
-bus_routes_touch_size <- as.numeric(round(object.size(bus_routes_touch_size)/1024, 0))
+bus_routes_touch <-  st_touches(st_geometry(bus_routes))
+bus_routes_touch <- graph_from_adj_list(bus_routes_touch)
+components <- components(bus_routes_touch)$membership
+bus_routes_touch <- bus_routes %>% group_by(section = as.character({{components}})) %>% 
+  summarise()
 
-#plot(bus_routes_touch)
+
+bus_routes_touch_size <- as.numeric(round(object.size(bus_routes_touch)/1024, 0))
