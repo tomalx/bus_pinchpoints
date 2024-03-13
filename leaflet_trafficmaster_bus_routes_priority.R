@@ -8,9 +8,8 @@ library(leaflet)
 library(RColorBrewer)
 
 
-# simplify and filter bus routes
-bus_routes <- bus_routes %>% filter(line_name != "FALCON" & freqency > 0) %>% 
-  st_simplify(dTolerance = 10, preserveTopology = TRUE)
+### source simplify and reduce bus_routes function
+source("visualisation/bus_pinchpoints/bus_routes_condense.R")
 
 
 ### filter all_tm for the worst delays where traffic speeds are reduced by x percent?

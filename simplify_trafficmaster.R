@@ -144,6 +144,35 @@ tm_light_union_size <- as.numeric(round(object.size(tm_7_8_light_union)/1024, 0)
 # percentage difference in size
 (tm_size - tm_light_size) / tm_size * 100
 
+###################################################################
+#### simplify bus routes  #########################################
+
+bus_routes <- st_read(connec,query = "SELECT * FROM arup.existingbusservices") %>%st_transform(crs = 4326)
+
+bus_routes <- bus_routes %>% filter(line_name %in% c("48", "48A", "49", "49A"))
+
+plot(st_geometry(bus_routes))
+plot(bus_routes %>% select(diva_line))
+
+bus_routes <- st_multilinestring(unique(st_geometry(bus_routes)))
+
+frequency <- 2   # only show routes with frequency of x or more
+
+bus_routes_size <- as.numeric(round(object.size(bus_routes)/1024, 0))
 
 
 
+
+bus_routes_touch <-  st_touches(st_geometry(bus_routes))
+bus_routes_touch <- graph_from_adj_list(bus_routes_touch)
+components <- components(bus_routes_touch)$membership
+bus_routes_touch <- bus_routes %>% group_by(section = as.character({{components}})) %>% 
+  summarise()
+
+
+bus_routes_touch_size <- as.numeric(round(object.size(bus_routes_touch_size)/1024, 0))
+
+
+
+
+ 
