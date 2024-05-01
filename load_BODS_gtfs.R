@@ -28,9 +28,31 @@ shape_lengths <- gtfs$shapes %>%
   as.data.frame() %>% 
   select(shape_id, length, -geometry)
 
+# subset for only one operator
+
+OP736_routes <- gtfs$routes %>% filter(agency_id == "OP736") %>% pull(route_id)
+
+
+gtfs$trips <- gtfs$trips %>% filter(route_id %in% OP736_routes)
+OP736_shapes <- gtfs$trips %>% pull(shape_id) %>% unique()
+
+gtfs$shapes <- gtfs$shapes %>% filter(shape_id %in% OP736_shapes)
+
+# count trips per route
+OP736_trip_summary <- gtfs$trips %>% 
+  left_join(gtfs$.$servicepatterns, by="service_id") %>% 
+  left_join(shape_lengths, by="shape_id") %>%
+  group_by(route_id) %>%
+  summarise(#route_short_name = route_short_name,
+            total_distance_per_day_km = sum(as.numeric(length), na.rm=TRUE)/1e3,
+            trips = n()) %>%
+  left_join(first_routes %>% select(route_id, route_short_name), by="route_id")
+           
+
 # Now we’re ready to roll the statistics up to services.
 
-service_pattern_summary <- gtfs$trips %>%
+
+service_pattern_summary <- gtfs$trips %>% 
   left_join(gtfs$.$servicepatterns, by="service_id") %>% 
   left_join(shape_lengths, by="shape_id") %>%
   left_join(gtfs$stop_times, by="trip_id") %>% 
@@ -41,3 +63,5 @@ service_pattern_summary <- gtfs$trips %>%
     total_distance_per_day_km = sum(as.numeric(length), na.rm=TRUE)/1e3,
     route_avg_distance_km = (sum(as.numeric(length), na.rm=TRUE)/1e3)/(trips*routes),
     stops=(n_distinct(stop_id)/2))
+
+
