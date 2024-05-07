@@ -39,6 +39,8 @@ weca_gtfs$trips <- weca_gtfs$trips %>% left_join(weca_gtfs$routes, by="route_id"
   mutate(direction_id = as.integer(factor(trip_headsign))) %>% 
   ungroup()
 
+
+
 ######### identify trips with missing shapes #########
 # trips with no shape
 trips_missing_shapes <- weca_gtfs$trips %>% filter(shape_id == "") %>% pull(trip_id)
@@ -47,7 +49,7 @@ trips_missing_shapes <- weca_gtfs$trips %>% filter(shape_id == "") %>% pull(trip
 stop_times_missing_shapes <- weca_gtfs$stop_times %>% 
   filter(trip_id %in% trips_missing_shapes)
 
-
+################################################################################
 
 shapes <- weca_gtfs$shapes %>% st_transform(4326)
 leaflet() %>% 
@@ -84,7 +86,6 @@ sql <- glue_sql( "SELECT * FROM prospective.congestion ",
 route_40s_pros_route <- st_read(connec, query = sql)
 
 
-
 ####### tidy prospective data ########
 route_40s_pros_route_tidy <- route_40s_pros_route %>% 
   group_by(shape, hour_of_day) %>%
@@ -94,18 +95,34 @@ route_40s_pros_route_tidy <- route_40s_pros_route %>%
 
 ####### leaflet plot of prospective data #########
 # palette
-pal <- colorQuantile(palette = "Blues", domain = route_40s_pros_route_tidy$delay_per_m, 6)
-
+pal <- colorQuantile(palette = "Blues", domain = route_40s_pros_route_tidy$delay_per_m, 10)
+palOcc <- colorQuantile(palette = "Reds", domain = route_40s_pros_route_tidy$average_total_occupancy, 10)
 
 leaflet() %>% 
   addProviderTiles(providers$CartoDB.Positron) %>%
   #addProviderTiles(providers$CartoDB.DarkMatter) %>%
   #addPolylines(data = shapes, weight = 2, color = "purple", group = "BOD data" ) %>% 
   #addPolylines(data = bus_routes, weight = 2, color = "cyan", group = "theo DB data") %>% 
-  addPolylines(data = route_40s_pros_route_tidy, weight = 4, color = ~pal(route_40s_pros_route_tidy$delay_per_m), group = "prospective data") %>%
-  addLayersControl(baseGroups = c("BOD data", "theo DB data", "prospective data"), options = layersControlOptions(collapsed = FALSE))
+  addPolylines(data = route_40s_pros_route_tidy, weight = 4, 
+               color = ~pal(route_40s_pros_route_tidy$delay_per_m),
+               popup = ~paste("Average total occupancy: ", delay_per_m),
+               highlightOptions = highlightOptions(bringToFront = TRUE, opacity = 1, weight = 8, sendToBack = FALSE),
+               group = "delay per m") %>%
+  addPolylines(data = route_40s_pros_route_tidy, weight = 4, 
+               color = ~palOcc(route_40s_pros_route_tidy$average_total_occupancy),
+               popup = ~paste("Average total occupancy: ", average_total_occupancy),
+               highlightOptions = highlightOptions(bringToFront = TRUE, opacity = 1, weight = 8, sendToBack = FALSE),
+               group = "total occupancy") %>%
+  #add(popup = ~paste("Delay per metre: ", delay_per_m, "<br> Average total occupancy: ", average_total_occupancy), group = "prospective data") %>% 
+  addLayersControl(baseGroups = c("delay per m", "total occupancy"), options = layersControlOptions(collapsed = FALSE))
                               
-## next steps                             
+## next steps - split out visulaising prospective data from the BODS data upload.
+## turning prospective data interactive with controls for:
+##            - directiom (inbound, outbound)
+##            - time of day
+##            - scale - delay per metre
+##            - scale - average total occupancy
+##            - use time periods too
 
 # congestion_data_periods <- st_read(connec, query = "SELECT DISTINCT data_period FROM prospective.congestion")
 
