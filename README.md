@@ -1,2 +1,3 @@
-# bus_pinchpoints
- analysis of bus traffic speeds to identify pinchpoints on the network
+## Scripts for accessing BOD from Dft
+
+## Scripts for accessing First’s gps bus data (from WECA postgresql database)
