@@ -50,7 +50,7 @@ stop_times_missing_shapes <- weca_gtfs$stop_times %>%
   filter(trip_id %in% trips_missing_shapes)
 
 ################################################################################
-
+library(leaflet)
 shapes <- weca_gtfs$shapes %>% st_transform(4326)
 leaflet() %>% 
   addProviderTiles(providers$CartoDB.Positron) %>%
@@ -66,8 +66,14 @@ route_40s_stops <- weca_gtfs$trips %>% filter(route_short_name %in% c(42,43,44,4
   pull(stop_id)
 
 
-######## connect to DB and load First's Prospective data #########
+route_6or7_stops <- weca_gtfs$trips %>% filter(route_short_name %in% c(6,7)) %>% 
+  left_join(weca_gtfs$stop_times, by="trip_id") %>% 
+  select(stop_id) %>% 
+  distinct() %>% 
+  pull(stop_id)
 
+######## connect to DB and load First's Prospective data #########
+library(glue)
 ## IDEA: use a network version of the prospective data to recreate the missing BODS shapes
 # databse connection
 if(!exists("connec")) {
@@ -131,54 +137,4 @@ first_routes <- sw_gtfs$routes %>% filter(agency_id == "OP736")
 first_shapes <- sw_gtfs$shapes
 
 # After setting the service patterns, we can summarise each service by the 
-# number of trips and stops. We’ll also summarise the total distance covered 
-# by all trips in the service, and then check that against the total distance 
-# covered by the average route. First, we need to calculate the distance of 
-# each part of the route shapes. To do this (and for creating maps later on) 
-# we convert stops and shapes to simple features with gtfs_as_sf.
-
-gtfs <- set_servicepattern(sw_gtfs)
-gtfs <- gtfs_as_sf(gtfs)
-gtfs$shapes$length <- st_length(gtfs$shapes)
-
-shape_lengths <- gtfs$shapes %>% 
-  as.data.frame() %>% 
-  select(shape_id, length, -geometry)
-
-# subset for only one operator
-
-OP736_routes <- gtfs$routes %>% filter(agency_id == "OP736") %>% pull(route_id)
-
-
-gtfs$trips <- gtfs$trips %>% filter(route_id %in% OP736_routes)
-OP736_shapes <- gtfs$trips %>% pull(shape_id) %>% unique()
-
-gtfs$shapes <- gtfs$shapes %>% filter(shape_id %in% OP736_shapes)
-
-# count trips per route
-OP736_trip_summary <- gtfs$trips %>% 
-  left_join(gtfs$.$servicepatterns, by="service_id") %>% 
-  left_join(shape_lengths, by="shape_id") %>%
-  group_by(route_id) %>%
-  summarise(#route_short_name = route_short_name,
-            total_distance_per_day_km = sum(as.numeric(length), na.rm=TRUE)/1e3,
-            trips = n()) %>%
-  left_join(first_routes %>% select(route_id, route_short_name), by="route_id")
-           
-
-# Now we’re ready to roll the statistics up to services.
-
-
-service_pattern_summary <- gtfs$trips %>% 
-  left_join(gtfs$.$servicepatterns, by="service_id") %>% 
-  left_join(shape_lengths, by="shape_id") %>%
-  left_join(gtfs$stop_times, by="trip_id") %>% 
-  group_by(servicepattern_id) %>% 
-  summarise(
-    trips = n(), 
-    routes = n_distinct(route_id),
-    total_distance_per_day_km = sum(as.numeric(length), na.rm=TRUE)/1e3,
-    route_avg_distance_km = (sum(as.numeric(length), na.rm=TRUE)/1e3)/(trips*routes),
-    stops=(n_distinct(stop_id)/2))
-
-
+# number of trips and stops. Web

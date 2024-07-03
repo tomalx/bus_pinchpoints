@@ -3,7 +3,7 @@
 
 # bus operators in weca
 weca_bus_operators <- weca_gtfs$routes %>% filter(route_type == 3) %>% 
-  left_join(gtfs$agency, by="agency_id") %>% group_by(agency_id) %>%
+  left_join(weca_gtfs$agency, by="agency_id") %>% group_by(agency_id) %>%
   summarise(agency_name = first(agency_name),
             routes = n_distinct(route_id))
 
@@ -21,24 +21,24 @@ service_id_Sat <- weca_gtfs$calendar %>% filter(monday == 0 & tuesday == 0 & wed
 service_id_Sun <- weca_gtfs$calendar %>% filter(monday == 0 & tuesday == 0 & wednesday == 0 & thursday == 0 & friday == 0 &
                                                   saturday == 1 & sunday == 0) %>% pull(service_id)
 
-weca_routes_freq_MF <- weca_gtfs$trips %>% left_join(weca_gtfs$routes, by="route_id") %>%
-  #filter(route_short_name == 7) %>%
-  filter(service_id %in% service_id_MF) %>%
-  group_by(route_id, route_short_name, trip_headsign) %>%  summarise(trips = n())  # number of trips per route
+# weca_routes_freq_MF <- weca_gtfs$trips %>% left_join(weca_gtfs$routes, by="route_id") %>%
+#   #filter(route_short_name == 7) %>%
+#   filter(service_id %in% service_id_MF) %>%
+#   group_by(route_id, route_short_name, trip_headsign) %>%  summarise(trips = n())  # number of trips per route
+# 
+# weca_routes_freq_Sat <- weca_gtfs$trips %>% left_join(weca_gtfs$routes, by="route_id") %>%
+#   #filter(route_short_name == 7) %>%
+#   filter(service_id %in% service_id_Sat) %>%
+#   group_by(route_id, route_short_name, trip_headsign) %>%  summarise(trips = n())  # number of trips per route
+# 
+# weca_routes_freq_Sun <- weca_gtfs$trips %>% left_join(weca_gtfs$routes, by="route_id") %>%
+#   #filter(route_short_name == 7) %>%
+#   filter(service_id %in% service_id_Sun) %>%
+#   group_by(route_id, route_short_name, trip_headsign) %>%  summarise(trips = n())  # number of trips per route
 
-weca_routes_freq_Sat <- weca_gtfs$trips %>% left_join(weca_gtfs$routes, by="route_id") %>%
-  #filter(route_short_name == 7) %>%
-  filter(service_id %in% service_id_Sat) %>%
-  group_by(route_id, route_short_name, trip_headsign) %>%  summarise(trips = n())  # number of trips per route
-
-weca_routes_freq_Sun <- weca_gtfs$trips %>% left_join(weca_gtfs$routes, by="route_id") %>%
-  #filter(route_short_name == 7) %>%
-  filter(service_id %in% service_id_Sun) %>%
-  group_by(route_id, route_short_name, trip_headsign) %>%  summarise(trips = n())  # number of trips per route
 
 
-
-route_freq_MF <- get_route_frequency(weca_gtfs, start_time = "08:00:00", end_time = "10:00:00", service_ids = service_id_MF) %>% 
+route_freq_MF <- get_route_frequency(weca_gtfs, start_time = "06:00:00", end_time = "12:00:00", service_ids = service_id_MF) %>% 
   left_join(weca_gtfs$routes, by="route_id")
 
 route_freq_Sat <- get_route_frequency(weca_gtfs, start_time = "10:00:00", end_time = "15:00:00", service_ids = service_id_Sat) %>% 
@@ -46,6 +46,12 @@ route_freq_Sat <- get_route_frequency(weca_gtfs, start_time = "10:00:00", end_ti
 
 route_freq_Sun <- get_route_frequency(weca_gtfs, start_time = "10:00:00", end_time = "15:00:00", service_ids = service_id_Sun) %>% 
   left_join(weca_gtfs$routes, by="route_id")
+
+### buses per hour
+route_freq_MF %>% 
+  mutate(bph = 60/(median_headways/60)) %>% 
+  mutate(bph_floor = floor(60/(median_headways/60)+0.5)) %>% 
+  select(route_short_name, bph, bph_floor)
 
 
 # plot one or more routes
