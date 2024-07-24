@@ -12,7 +12,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #### download_gtfs.R
 
-- Download SW zipped GTFS file from DfT and save in BODS folder  
+- Download SW zipped GTFS file from DfT and save in BODS folder
+- saves as zip file with date in file name
 - https://data.bus-data.dft.gov.uk/timetable/download/gtfs-file/south_west/  
 
 #### load_BODS_gtfs.R

@@ -1,0 +1,103 @@
+---
+title: "Bus Corridor Delay Analysis"
+format: html
+editor: visual
+---
+
+```{r setup, include=FALSE}
+## load libraries
+library(tidytransit)
+library(sf)
+library(tidyverse)
+library(glue)
+```
+
+
+
+```{r read_gtfs, include=FALSE}
+
+# find latest file listed in rds folder
+path <- "C:/Users/tom.alexander1/OneDrive - West Of England Combined Authority/Transport/2.2 Bus/BODS/rds/"
+
+latest_rds_file <- list.files(path = path, full.names = T) %>% 
+  enframe(name = NULL) %>% 
+  bind_cols(pmap_df(., file.info)) %>% 
+  filter(mtime==max(mtime)) %>% 
+  pull(value)
+
+weca_gtfs <- readRDS(latest_rds_file)
+
+```
+
+```{r get_corridor_stops, include=FALSE}
+
+routes_on_corridor <- c(42,43,44,45)   # SET routes to be analysed
+
+source("C:/Users/tom.alexander1/OneDrive - West Of England Combined Authority/Transport/2.2 Bus/visualisation/bus_pinchpoints/gtfs_corridor_stops.R")
+
+```
+
+```{r load_first_pros,  include=FALSE}
+
+# get stop ids after removing NA values
+stop_ids <- common_stops %>% 
+  filter(!is.na(from_stop_id), !is.na(to_stop_id)) %>% 
+  select(from_stop_id, to_stop_id) 
+
+stop_from_ids <- common_stops %>% drop_na(from_stop_id) %>% pull(from_stop_id)
+stop_to_ids <- common_stops %>% drop_na(to_stop_id) %>% pull(to_stop_id)
+
+if(!exists("connec")) {
+  # source the connect_postgreSQL.R script
+  source("C:\\Users\\tom.alexander1\\OneDrive - West Of England Combined Authority\\Transport\\7.0 Data\\Rscripts\\access_postgresql\\access_to_postgresql\\connect_postgreSQL.R")
+}
+# sql query (using glue package for syntax formatting)
+sql <- glue_sql( "SELECT * FROM prospective.congestion ",
+                 "WHERE bounding_start_stop IN ({stop_from_ids*}) ",
+                 "AND bounding_end_stop IN ({stop_to_ids*}) ",
+                 "AND data_period = '2023 Oct - 2023 Dec' ",
+                 #"AND hour_of_day = '08:00:00' " ,
+                 #"FETCH FIRST 200 ROWS ONLY", 
+                 .con = connec)
+
+# fetch data
+first_pros <- st_read(connec, query = sql)
+
+
+####### tidy prospective data ########
+first_pros <- first_pros %>% 
+  group_by(shape, hour_of_day) %>%
+  # first(start_stop_name) %>% 
+  summarise(delay_per_m = mean(delay_per_m), average_total_occupancy = mean(average_total_occupancy)) %>% 
+  st_transform(4326)
+
+
+```
+
+
+
+## Bus Route Corridor
+
+The delay data shown in this analysis covers common sections of the following bus routes:
+```{r route_table, echo=FALSE}
+route_summary %>% gt::gt()
+
+```
+
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+1 + 1
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).

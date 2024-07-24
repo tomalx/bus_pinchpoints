@@ -1,10 +1,19 @@
 
+# find latest file listed in rds folder
+path <- "C:/Users/tom.alexander1/OneDrive - West Of England Combined Authority/Transport/2.2 Bus/BODS/rds/"
+
+latest_rds_file <- list.files(path = path, full.names = T) %>% 
+  enframe(name = NULL) %>% 
+  bind_cols(pmap_df(., file.info)) %>% 
+  filter(mtime==max(mtime)) %>% 
+  pull(value)
+
 
 # requires weca_gtfs to be loaded into env
 if (!exists("weca_gtfs")) {
-  stop("weca_gtfs object not found in environment, attempting to load from file...")
+  print("weca_gtfs object not found in environment, attempting to load from file...")
   # load from direcotry
-  readRDS("C:/Users/tom.alexander1/OneDrive - West Of England Combined Authority/Transport/2.2 Bus/BODS/gtfs/weca_gtfs.RDS")
+  weca_gtfs <- readRDS(latest_rds_file)
 } else {
   print("weca_gtfs object found in environment")
 }
